@@ -45,6 +45,8 @@ public:
     // either returns a valid device or panics
     [[nodiscard]] wgpu::Device requestDevice(wgpu::Adapter const& adapter);
 
+    void configureSurface(wgpu::Surface& surface, wgpu::Device const& device);
+
 protected:
     [[nodiscard]] Driver* createDriver(void* sharedContext,
             const Platform::DriverConfig& driverConfig) noexcept override;

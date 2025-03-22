@@ -22,14 +22,20 @@
 #include "DriverBase.h"
 #include "private/backend/Dispatcher.h"
 #include "private/backend/Driver.h"
+#include "private/backend/HandleAllocator.h"
 #include <backend/DriverEnums.h>
 
 #include <utils/compiler.h>
 
 #include <webgpu/webgpu_cpp.h>
 
+#include "WebGPUHandles.h"
+
 #include <cstdint>
 
+#ifndef FILAMENT_WEBGPU_HANDLE_ARENA_SIZE_IN_MB
+#    define FILAMENT_WEBGPU_HANDLE_ARENA_SIZE_IN_MB 8
+#endif
 namespace filament::backend {
 
 /**
@@ -40,10 +46,10 @@ public:
     ~WebGPUDriver() noexcept override;
 
     [[nodiscard]] Dispatcher getDispatcher() const noexcept final;
-    [[nodiscard]] static Driver* create(WebGPUPlatform& platform) noexcept;
+    [[nodiscard]] static Driver* create(WebGPUPlatform& platform, const Platform::DriverConfig& driverConfig) noexcept;
 
 private:
-    explicit WebGPUDriver(WebGPUPlatform& platform) noexcept;
+    WebGPUDriver(WebGPUPlatform& platform, const Platform::DriverConfig& driverConfig) noexcept;
     [[nodiscard]] ShaderModel getShaderModel() const noexcept final;
     [[nodiscard]] ShaderLanguage getShaderLanguage() const noexcept final;
 
@@ -54,6 +60,7 @@ private:
     wgpu::Adapter mAdapter = nullptr;
     wgpu::Device mDevice = nullptr;
     wgpu::Queue mQueue = nullptr;
+    // wgpu::Pipeline
     uint64_t mNextFakeHandle = 1;
 
     /*
@@ -74,6 +81,15 @@ private:
     UTILS_ALWAYS_INLINE inline void methodName##R(RetType, paramsDecl);
 
 #include "private/backend/DriverAPI.inc"
+    // Memory management
+
+    HandleAllocatorWGPU mHandleAllocator;
+
+    template<typename D>
+    Handle<D> allocHandle() {
+        return mHandleAllocator.allocate<D>();
+    }
+
 };
 
 }// namespace filament::backend

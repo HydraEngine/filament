@@ -144,15 +144,28 @@ wgpu::Device WebGPUPlatform::requestDevice(wgpu::Adapter const& adapter) {
 }
 
 Driver* WebGPUPlatform::createDriver(void* sharedContext,
-        const Platform::DriverConfig& /*driverConfig*/) noexcept {
+        const Platform::DriverConfig& driverConfig) noexcept {
     if (sharedContext) {
         FWGPU_LOGW << "sharedContext is ignored/unused in the WebGPU backend. A non-null "
                       "sharedContext was provided, but it will be ignored."
                    << utils::io::endl;
     }
-    return WebGPUDriver::create(*this);
+    return WebGPUDriver::create(*this, driverConfig);
 }
 
+void WebGPUPlatform::configureSurface(wgpu::Surface& surface, wgpu::Device const& device) {
+    wgpu::SurfaceConfiguration config={};
+
+    config.device = device;
+    config.usage = wgpu::TextureUsage::RenderAttachment;
+    config.format = wgpu::TextureFormat::BGRA8UnormSrgb;
+    config.width = 1024;
+    config.height = 640;
+    config.presentMode = wgpu::PresentMode::Fifo;
+    config.alphaMode = wgpu::CompositeAlphaMode::Auto;
+
+    surface.Configure(&config);
+}
 WebGPUPlatform::WebGPUPlatform()
     : mInstance(createInstance()) {}
 
