@@ -70,19 +70,24 @@ struct VulkanRenderPass {
 // context are stored in VulkanPlatform.
 struct VulkanContext {
 public:
-    inline uint32_t selectMemoryType(uint32_t flags, VkFlags reqs) const {
-        if ((reqs & VK_MEMORY_PROPERTY_PROTECTED_BIT) != 0) {
-            assert_invariant(isProtectedMemorySupported() == true);
-        }
+    static uint32_t selectMemoryType(VkPhysicalDeviceMemoryProperties const& memoryProperties,
+            uint32_t flags, VkFlags reqs) {
         for (uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
             if (flags & 1) {
-                if ((mMemoryProperties.memoryTypes[i].propertyFlags & reqs) == reqs) {
+                if ((memoryProperties.memoryTypes[i].propertyFlags & reqs) == reqs) {
                     return i;
                 }
             }
             flags >>= 1;
         }
         return (uint32_t) VK_MAX_MEMORY_TYPES;
+    }
+
+    inline uint32_t selectMemoryType(uint32_t flags, VkFlags reqs) const {
+        if ((reqs & VK_MEMORY_PROPERTY_PROTECTED_BIT) != 0) {
+            assert_invariant(isProtectedMemorySupported());
+        }
+        return selectMemoryType(mMemoryProperties, flags, reqs);
     }
 
     inline fvkutils::VkFormatList const& getAttachmentDepthStencilFormats() const {

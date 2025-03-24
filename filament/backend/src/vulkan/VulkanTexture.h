@@ -67,7 +67,6 @@ struct VulkanTextureState : public fvkmemory::Resource {
             VkComponentMapping swizzle);
 private:
     void clearCachedImageViews() noexcept;
-
     VulkanStagePool& mStagePool;
     VulkanCommands* const mCommands;
     VmaAllocator const mAllocator;

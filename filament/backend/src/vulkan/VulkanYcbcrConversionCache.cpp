@@ -52,6 +52,7 @@ VkSamplerYcbcrConversion VulkanYcbcrConversionCache::getConversion(
         .chromaFilter = fvkutils::getFilter(chroma.chromaFilter),
     };
 
+    // We could put this in the platform class, but that seems like a bit of an overkill
 #if defined(__ANDROID__)
     VkExternalFormatANDROID externalFormat = {
         .sType = VK_STRUCTURE_TYPE_EXTERNAL_FORMAT_ANDROID,
