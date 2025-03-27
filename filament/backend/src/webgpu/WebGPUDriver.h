@@ -62,7 +62,11 @@ private:
     wgpu::Queue mQueue = nullptr;
     // wgpu::Pipeline
     uint64_t mNextFakeHandle = 1;
-
+    wgpu::CommandEncoder mCommandEncoder = nullptr;
+    wgpu::TextureView mTextureView = nullptr;
+    wgpu::RenderPassEncoder mRenderPassEncoder = nullptr;
+    wgpu::CommandBuffer mCommandBuffer = nullptr;
+    WGPURenderTarget* mDefaultRenderTarget = nullptr;
     /*
      * Driver interface
      */

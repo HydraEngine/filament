@@ -307,6 +307,9 @@ void WebGPUDriver::tick(int) {
 void WebGPUDriver::beginFrame(int64_t monotonic_clock_ns,
         int64_t refreshIntervalNs, uint32_t frameId) {
     FWGPU_LOGW << __FUNCTION__<< "\n";
+    wgpu::CommandEncoderDescriptor commandEncoderDescriptor{};
+    commandEncoderDescriptor.nextInChain = nullptr;
+    mCommandEncoder = mDevice.CreateCommandEncoder(&commandEncoderDescriptor);
 }
 
 void WebGPUDriver::setFrameScheduledCallback(Handle<HwSwapChain> sch,
@@ -326,6 +329,10 @@ void WebGPUDriver::setPresentationTime(int64_t monotonic_clock_ns) {
 
 void WebGPUDriver::endFrame(uint32_t frameId) {
     FWGPU_LOGW << __FUNCTION__<< "\n";
+    mCommandEncoder = nullptr;
+    mQueue.Submit(1, &mCommandBuffer);
+    mCommandBuffer = nullptr;
+    mTextureView = nullptr;
 }
 
 void WebGPUDriver::flush(int) {
@@ -610,7 +617,9 @@ void WebGPUDriver::createProgramR(Handle<HwProgram> ph, Program&& program) {
 
 void WebGPUDriver::createDefaultRenderTargetR(Handle<HwRenderTarget> rth, int) {
     FWGPU_LOGW << __FUNCTION__<< "\n";
-    constructHandle<WGPURenderTarget>(rth);
+    assert_invariant(!mDefaultRenderTarget);
+    mDefaultRenderTarget = constructHandle<WGPURenderTarget>(rth);
+    assert_invariant(mDefaultRenderTarget);
 }
 
 void WebGPUDriver::createRenderTargetR(Handle<HwRenderTarget> rth, TargetBufferFlags targets,
@@ -842,10 +851,28 @@ void WebGPUDriver::compilePrograms(CompilerPriorityQueue priority,
 
 void WebGPUDriver::beginRenderPass(Handle<HwRenderTarget> rth, const RenderPassParams& params) {
     FWGPU_LOGW << __FUNCTION__<< "\n";
+    wgpu::RenderPassColorAttachment renderPassColorAttachment = {};
+    renderPassColorAttachment.view = mTextureView;
+    renderPassColorAttachment.resolveTarget = nullptr;
+    renderPassColorAttachment.loadOp = wgpu::LoadOp::Clear;
+    renderPassColorAttachment.storeOp = wgpu::StoreOp::Store;
+    renderPassColorAttachment.clearValue = wgpu::Color{1, 0 , 0 , 1};
+
+    wgpu::RenderPassDescriptor renderPassDescriptor = {};
+    renderPassDescriptor.colorAttachmentCount = 1;
+    renderPassDescriptor.colorAttachments = &renderPassColorAttachment;
+    renderPassDescriptor.depthStencilAttachment = nullptr;
+    renderPassDescriptor.timestampWrites = nullptr;
+
+    mRenderPassEncoder = mCommandEncoder.BeginRenderPass(&renderPassDescriptor);
+    mRenderPassEncoder.SetViewport((float)params.viewport.left, (float)params.viewport.bottom,
+            (float) params.viewport.width, (float) params.viewport.height, params.depthRange.near, params.depthRange.far);
 }
 
 void WebGPUDriver::endRenderPass(int) {
     FWGPU_LOGW << __FUNCTION__<< "\n";
+    mRenderPassEncoder.End();
+    mRenderPassEncoder = nullptr;
 }
 
 void WebGPUDriver::nextSubpass(int) {
@@ -858,6 +885,9 @@ void WebGPUDriver::makeCurrent(Handle<HwSwapChain> drawSch, Handle<HwSwapChain> 
 
 void WebGPUDriver::commit(Handle<HwSwapChain> sch) {
     FWGPU_LOGW << __FUNCTION__<< "\n";
+    wgpu::CommandBufferDescriptor commandBufferDescriptor = {};
+    commandBufferDescriptor.nextInChain = nullptr;
+    mCommandBuffer = mCommandEncoder.Finish(&commandBufferDescriptor);
 }
 
 void WebGPUDriver::setPushConstant(backend::ShaderStage stage, uint8_t index,
@@ -918,6 +948,8 @@ void WebGPUDriver::bindRenderPrimitive(Handle<HwRenderPrimitive> rph) {
 
 void WebGPUDriver::draw2(uint32_t indexOffset, uint32_t indexCount, uint32_t instanceCount) {
     FWGPU_LOGW << __FUNCTION__<< "\n";
+    mRenderPassEncoder.DrawIndexed(indexCount, instanceCount, indexOffset, 0, 0);
+
 }
 
 void WebGPUDriver::draw(PipelineState pipelineState, Handle<HwRenderPrimitive> rph,
