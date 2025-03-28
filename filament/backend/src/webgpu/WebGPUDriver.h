@@ -50,6 +50,7 @@ public:
 
 private:
     WebGPUDriver(WebGPUPlatform& platform, const Platform::DriverConfig& driverConfig) noexcept;
+    wgpu::TextureView GetNextSurfaceTextureView();
     [[nodiscard]] ShaderModel getShaderModel() const noexcept final;
     [[nodiscard]] ShaderLanguage getShaderLanguage() const noexcept final;
 
