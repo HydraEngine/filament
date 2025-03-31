@@ -439,7 +439,6 @@ else()
             -Wgnu-conditional-omitted-operand
             -Wweak-vtables -Wnon-virtual-dtor -Wclass-varargs -Wimplicit-fallthrough
             -Wover-aligned -Wreorder-init-list
-            -Werror
     )
     if (CMAKE_CXX_STANDARD EQUAL 20)
         list(APPEND FILAMENT_WARNINGS -Wno-deprecated-this-capture)
