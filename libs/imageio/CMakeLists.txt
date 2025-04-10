@@ -28,7 +28,7 @@ set(SRCS
 # ==================================================================================================
 include_directories(${PUBLIC_HDR_DIR})
 
-add_library(${TARGET} STATIC ${PUBLIC_HDRS} ${SRCS})
+add_library(${TARGET} SHARED ${PUBLIC_HDRS} ${SRCS})
 
 target_include_directories(${TARGET} PUBLIC ${PUBLIC_HDR_DIR})
 set_target_properties(${TARGET} PROPERTIES FOLDER Libs)
@@ -44,3 +44,9 @@ endif()
 if (NOT MSVC)
     target_compile_options(${TARGET} PRIVATE -Wno-deprecated-register)
 endif()
+
+# ==================================================================================================
+# Installation
+# ==================================================================================================
+install(TARGETS ${TARGET} ARCHIVE DESTINATION lib/${DIST_DIR})
+install(DIRECTORY ${PUBLIC_HDR_DIR}/imageio DESTINATION include)
